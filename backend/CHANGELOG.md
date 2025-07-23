@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Method validation in download handler
 - Empty body handling in upload handler
 - Consistent error status codes
+- Remove unused imports in benchmark tests
 
 ## [0.1.0] - 2025-07-23
 
