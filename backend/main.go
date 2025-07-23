@@ -92,6 +92,11 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 // 2. Generates random data in chunks to simulate a real file download
 // 3. Streams the data to the client in an efficient manner
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", downloadSize))
 
@@ -127,6 +132,16 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 // 3. Calculates total bytes received and duration
 // 4. Returns timing information to the client
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.ContentLength == 0 {
+		http.Error(w, "Request body is empty", http.StatusBadRequest)
+		return
+	}
+
 	startTime := time.Now()
 
 	bytesUploaded, err := io.Copy(io.Discard, r.Body)
