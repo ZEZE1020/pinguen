@@ -78,7 +78,9 @@ func TestDownloadHandler(t *testing.T) {
 // - Returns valid duration
 // - Returns proper JSON response
 func TestUploadHandler(t *testing.T) {
-	body := strings.NewReader("test data")
+	// Create a larger payload (1MB) to ensure measurable duration
+	payload := strings.Repeat("a", 1024*1024)
+	body := strings.NewReader(payload)
 	req, err := http.NewRequest("POST", "/upload", body)
 	if err != nil {
 		t.Fatal(err)
@@ -100,12 +102,18 @@ func TestUploadHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if response.BytesUploaded != int64(len("test data")) {
-		t.Errorf("expected BytesUploaded %v, got %v", len("test data"), response.BytesUploaded)
+	expectedBytes := int64(len(payload))
+	if response.BytesUploaded != expectedBytes {
+		t.Errorf("expected BytesUploaded %v, got %v", expectedBytes, response.BytesUploaded)
 	}
 
 	if response.Duration <= 0 {
 		t.Error("expected non-zero duration")
+	}
+
+	// Add duration sanity check
+	if response.Duration > 1000 { // more than 1 second would be too slow
+		t.Errorf("upload took too long: %v ms", response.Duration)
 	}
 }
 
