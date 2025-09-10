@@ -1,0 +1,31 @@
+# Backend .dockerignore
+*.test
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+QUICKSTART.md
+
+# Test files
+*_test.go
+benchmark_test.go
+handlers_test.go
+main_test.go
+server_test.go
+
+# Other
+.DS_Store
+.env*
+fly.toml
