@@ -164,8 +164,8 @@ jobs:
     - name: Test Docker Compose Production
       run: |
         # Test production docker-compose
-        docker-compose -f docker-compose.yml build
-        docker-compose -f docker-compose.yml up -d
+        docker compose -f docker-compose.yml build
+        docker compose -f docker-compose.yml up -d
         
         # Wait for services to be ready
         sleep 20
@@ -179,16 +179,16 @@ jobs:
         curl -s http://localhost:3000 | grep -q "Pinguen Speed Test" || exit 1
         
         # Show logs for debugging
-        docker-compose -f docker-compose.yml logs
+        docker compose -f docker-compose.yml logs
         
         # Cleanup
-        docker-compose -f docker-compose.yml down
+        docker compose -f docker-compose.yml down
 
     - name: Test Docker Compose Development
       run: |
         # Test development docker-compose
-        docker-compose -f docker-compose.dev.yml build
-        docker-compose -f docker-compose.dev.yml up -d
+        docker compose -f docker-compose.dev.yml build
+        docker compose -f docker-compose.dev.yml up -d
         
         # Wait for services to be ready (dev takes longer)
         sleep 30
@@ -201,10 +201,10 @@ jobs:
         curl -f http://localhost:5173 || exit 1
         
         # Show logs for debugging
-        docker-compose -f docker-compose.dev.yml logs
+        docker compose -f docker-compose.dev.yml logs
         
         # Cleanup
-        docker-compose -f docker-compose.dev.yml down
+        docker compose -f docker-compose.dev.yml down
 
     - name: Test API Script
       run: |
@@ -212,7 +212,7 @@ jobs:
         chmod +x ./test-api.sh
         
         # Start backend for API testing
-        docker-compose -f docker-compose.yml up -d backend
+        docker compose -f docker-compose.yml up -d backend
         sleep 15
         
         # Run API tests (without jq dependency)
@@ -222,7 +222,7 @@ jobs:
         curl -f -X POST -d "test data" http://localhost:8080/upload
         
         # Cleanup
-        docker-compose -f docker-compose.yml down
+        docker compose -f docker-compose.yml down
 
   security-scan:
     runs-on: ubuntu-latest
