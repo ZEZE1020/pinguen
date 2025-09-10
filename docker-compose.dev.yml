@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pinguen-backend-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENV=development
+    networks:
+      - pinguen-dev-network
+    restart: unless-stopped
+    volumes:
+      # Mount source code for hot reloading in development
+      - ./backend:/app
+    command: ["go", "run", "main.go", "middleware.go"]
+
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: pinguen-frontend-dev
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend-dev
+    networks:
+      - pinguen-dev-network
+    restart: unless-stopped
+    volumes:
+      # Mount source code for hot reloading
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+
+networks:
+  pinguen-dev-network:
+    driver: bridge
