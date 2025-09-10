@@ -1,0 +1,254 @@
+name: Docker Build & Test
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: ${{ github.repository }}/backend
+  IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+
+jobs:
+  backend-docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for Backend
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build Backend Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Backend Docker image
+      run: |
+        # Build and test the backend image locally
+        docker build -t test-backend ./backend
+        
+        # Run container in background
+        docker run -d --name test-backend-container -p 8080:8080 test-backend
+        
+        # Wait for container to be ready
+        sleep 10
+        
+        # Test health endpoint
+        curl -f http://localhost:8080/status || exit 1
+        
+        # Test ping endpoint
+        curl -f http://localhost:8080/ping || exit 1
+        
+        # Check container logs
+        docker logs test-backend-container
+        
+        # Cleanup
+        docker stop test-backend-container
+        docker rm test-backend-container
+
+  frontend-docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for Frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build Frontend Production Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Frontend Production Docker image
+      run: |
+        # Build and test the frontend production image
+        docker build -t test-frontend ./frontend
+        
+        # Run container in background
+        docker run -d --name test-frontend-container -p 3000:80 test-frontend
+        
+        # Wait for container to be ready
+        sleep 10
+        
+        # Test frontend is serving content
+        curl -f http://localhost:3000 || exit 1
+        
+        # Check if it's serving HTML content
+        curl -s http://localhost:3000 | grep -q "Pinguen Speed Test" || exit 1
+        
+        # Check container logs
+        docker logs test-frontend-container
+        
+        # Cleanup
+        docker stop test-frontend-container
+        docker rm test-frontend-container
+
+    - name: Build Frontend Development Docker image
+      run: |
+        # Test development build
+        docker build -t test-frontend-dev -f ./frontend/Dockerfile.dev ./frontend
+
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    needs: [backend-docker, frontend-docker]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Test Docker Compose Production
+      run: |
+        # Test production docker-compose
+        docker-compose -f docker-compose.yml build
+        docker-compose -f docker-compose.yml up -d
+        
+        # Wait for services to be ready
+        sleep 20
+        
+        # Test backend health
+        curl -f http://localhost:8080/status || exit 1
+        curl -f http://localhost:8080/ping || exit 1
+        
+        # Test frontend
+        curl -f http://localhost:3000 || exit 1
+        curl -s http://localhost:3000 | grep -q "Pinguen Speed Test" || exit 1
+        
+        # Show logs for debugging
+        docker-compose -f docker-compose.yml logs
+        
+        # Cleanup
+        docker-compose -f docker-compose.yml down
+
+    - name: Test Docker Compose Development
+      run: |
+        # Test development docker-compose
+        docker-compose -f docker-compose.dev.yml build
+        docker-compose -f docker-compose.dev.yml up -d
+        
+        # Wait for services to be ready (dev takes longer)
+        sleep 30
+        
+        # Test backend health
+        curl -f http://localhost:8080/status || exit 1
+        curl -f http://localhost:8080/ping || exit 1
+        
+        # Test frontend dev server
+        curl -f http://localhost:5173 || exit 1
+        
+        # Show logs for debugging
+        docker-compose -f docker-compose.dev.yml logs
+        
+        # Cleanup
+        docker-compose -f docker-compose.dev.yml down
+
+    - name: Test API Script
+      run: |
+        # Make script executable and run basic test
+        chmod +x ./test-api.sh
+        
+        # Start backend for API testing
+        docker-compose -f docker-compose.yml up -d backend
+        sleep 15
+        
+        # Run API tests (without jq dependency)
+        curl -f http://localhost:8080/status
+        curl -f http://localhost:8080/ping
+        curl -f http://localhost:8080/download --max-time 5
+        curl -f -X POST -d "test data" http://localhost:8080/upload
+        
+        # Cleanup
+        docker-compose -f docker-compose.yml down
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [backend-docker, frontend-docker]
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner on Backend
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'test-backend'
+        format: 'sarif'
+        output: 'backend-trivy-results.sarif'
+
+    - name: Run Trivy vulnerability scanner on Frontend
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'test-frontend'
+        format: 'sarif'
+        output: 'frontend-trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: '.'
