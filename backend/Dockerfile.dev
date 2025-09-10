@@ -2,7 +2,7 @@
 FROM golang:1.25-alpine
 
 # Install air for hot reloading (optional, but useful for development)
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 # Set the working directory
 WORKDIR /app
