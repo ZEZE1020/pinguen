@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   backend-dev:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: pinguen-backend-dev
     ports:
       - "8080:8080"
@@ -17,7 +15,6 @@ services:
     volumes:
       # Mount source code for hot reloading in development
       - ./backend:/app
-    command: ["go", "run", "main.go", "middleware.go"]
 
   frontend-dev:
     build:
