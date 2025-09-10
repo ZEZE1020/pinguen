@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
 
 // Mock window.crypto for frontend tests
 Object.defineProperty(window, 'crypto', {

@@ -23,7 +23,7 @@ describe('SpeedTest', () => {
   it('handles successful speed test', async () => {
     // Mock timing functions
     let currentTime = 0;
-    performance.now.mockImplementation(() => currentTime);
+    (performance.now as any).mockImplementation(() => currentTime);
 
     // Mock successful API responses
     mockFetch
