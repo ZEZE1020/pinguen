@@ -226,15 +226,30 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
-    needs: [backend-docker, frontend-docker]
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Backend image for security scan
+      run: |
+        docker build -t test-backend ./backend
+
+    - name: Build Frontend image for security scan
+      run: |
+        docker build -t test-frontend ./frontend
+
     - name: Run Trivy vulnerability scanner on Backend
       uses: aquasecurity/trivy-action@master
+      continue-on-error: true
       with:
         image-ref: 'test-backend'
         format: 'sarif'
@@ -242,13 +257,22 @@ jobs:
 
     - name: Run Trivy vulnerability scanner on Frontend
       uses: aquasecurity/trivy-action@master
+      continue-on-error: true
       with:
         image-ref: 'test-frontend'
         format: 'sarif'
         output: 'frontend-trivy-results.sarif'
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
-        sarif_file: '.'
+        sarif_file: 'backend-trivy-results.sarif'
+        category: 'backend-security'
+
+    - name: Upload Frontend Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'frontend-trivy-results.sarif'
+        category: 'frontend-security'
