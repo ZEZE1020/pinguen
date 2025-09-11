@@ -248,7 +248,7 @@ jobs:
         docker build -t test-frontend ./frontend
 
     - name: Run Trivy vulnerability scanner on Backend
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.14.0
       continue-on-error: true
       with:
         image-ref: 'test-backend'
@@ -256,12 +256,17 @@ jobs:
         output: 'backend-trivy-results.sarif'
 
     - name: Run Trivy vulnerability scanner on Frontend
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.14.0
       continue-on-error: true
       with:
         image-ref: 'test-frontend'
         format: 'sarif'
         output: 'frontend-trivy-results.sarif'
+
+    - name: Check SARIF files exist
+      run: |
+        if [ ! -s backend-trivy-results.sarif ]; then echo "Backend SARIF missing or empty"; exit 1; fi
+        if [ ! -s frontend-trivy-results.sarif ]; then echo "Frontend SARIF missing or empty"; exit 1; fi
 
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
