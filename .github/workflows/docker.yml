@@ -191,14 +191,23 @@ jobs:
         docker compose -f docker-compose.dev.yml up -d
         
         # Wait for services to be ready (dev takes longer)
-        sleep 30
+        sleep 60
+        
+        # Check container status
+        echo "Checking container status..."
+        docker compose -f docker-compose.dev.yml ps
         
         # Test backend health
         curl -f http://localhost:8080/status || exit 1
         curl -f http://localhost:8080/ping || exit 1
         
-        # Test frontend dev server
-        curl -f http://localhost:5173 || exit 1
+        # Test frontend dev server with better error handling
+        echo "Testing frontend dev server on port 5173..."
+        curl -f http://localhost:5173 || {
+          echo "Frontend test failed, showing container logs:"
+          docker compose -f docker-compose.dev.yml logs frontend-dev
+          exit 1
+        }
         
         # Show logs for debugging
         docker compose -f docker-compose.dev.yml logs
