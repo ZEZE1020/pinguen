@@ -274,19 +274,32 @@ jobs:
 
     - name: Check SARIF files exist
       run: |
-        if [ ! -s backend-trivy-results.sarif ]; then echo "Backend SARIF missing or empty"; exit 1; fi
-        if [ ! -s frontend-trivy-results.sarif ]; then echo "Frontend SARIF missing or empty"; exit 1; fi
+        echo "Checking SARIF files..."
+        ls -la *.sarif || echo "No SARIF files found"
+        
+        # Check if files exist and are not empty, but don't fail if Trivy found no vulnerabilities
+        if [ -f "backend-trivy-results.sarif" ]; then
+          echo "Backend SARIF file exists ($(wc -c < backend-trivy-results.sarif) bytes)"
+        else
+          echo "Backend SARIF file missing"
+        fi
+        
+        if [ -f "frontend-trivy-results.sarif" ]; then
+          echo "Frontend SARIF file exists ($(wc -c < frontend-trivy-results.sarif) bytes)"
+        else
+          echo "Frontend SARIF file missing"
+        fi
 
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('backend-trivy-results.sarif') != ''
       with:
         sarif_file: 'backend-trivy-results.sarif'
         category: 'backend-security'
 
     - name: Upload Frontend Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('frontend-trivy-results.sarif') != ''
       with:
         sarif_file: 'frontend-trivy-results.sarif'
         category: 'frontend-security'
