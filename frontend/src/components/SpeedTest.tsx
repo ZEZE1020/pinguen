@@ -14,7 +14,8 @@ interface TestState {
   isConnected: boolean;
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080';
+// Default to same-origin API path so Docker/Nginx/Vite proxies handle networking.
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || '/api';
 
 const SpeedTest: React.FC = () => {
   const [results, setResults] = useState<SpeedTestResults | null>(null);
@@ -174,8 +175,8 @@ const SpeedTest: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-4 px-4 sm:py-8 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 px-[clamp(0.75rem,3vw,2rem)] py-[clamp(1rem,3vw,2rem)]">
+      <div className="mx-auto w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-4 sm:mb-6 shadow-lg">
@@ -183,37 +184,37 @@ const SpeedTest: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-2 sm:mb-4">
+          <h1 className="mb-2 text-[clamp(1.9rem,6vw,3rem)] font-bold leading-tight bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent sm:mb-4">
             Pinguen Speed Test
           </h1>
-          <p className="text-base sm:text-lg text-gray-600 mb-4">Test your internet connection speed</p>
+          <p className="mb-4 text-[clamp(0.95rem,2.6vw,1.125rem)] text-gray-600">Test your internet connection speed</p>
           
           {/* Connection Status Bar */}
-          <div className="inline-flex items-center bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-white/20">
+          <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-y-1 rounded-full border border-white/20 bg-white/70 px-4 py-2 shadow-md backdrop-blur-sm">
             <div className="flex items-center space-x-2">
               <div className={`w-2.5 h-2.5 rounded-full ${testState.isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               <span className="text-sm font-medium text-gray-700">
                 {testState.isConnected ? 'Connected' : 'Disconnected'}
               </span>
             </div>
-            <div className="mx-3 h-4 w-px bg-gray-300"></div>
-            <span className="text-xs text-gray-500 font-mono">
+            <div className="mx-2 hidden h-4 w-px bg-gray-300 sm:block"></div>
+            <span className="max-w-full break-all text-center font-mono text-xs text-gray-500 sm:break-normal">
               {API_BASE_URL.replace('http://', '').replace('https://', '')}
             </span>
           </div>
         </div>
 
         {/* Main Test Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 lg:p-10 mb-6 sm:mb-8">
+        <div className="mb-6 rounded-3xl border border-white/20 bg-white/80 p-[clamp(1rem,3vw,2.5rem)] shadow-2xl backdrop-blur-sm sm:mb-8">
           <div className="text-center mb-8 sm:mb-12">
             <div className="relative">
               <button
                 onClick={runSpeedTest}
                 disabled={testState.isRunning || !testState.isConnected}
-                className={`group relative w-full max-w-sm mx-auto py-4 sm:py-5 px-8 sm:px-12 text-white rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 transform ${
+                className={`group relative mx-auto w-full max-w-sm rounded-2xl px-8 py-4 text-base font-semibold text-white transition-all duration-300 motion-safe:transform sm:px-12 sm:py-5 sm:text-lg ${
                   testState.isRunning || !testState.isConnected
                     ? 'bg-gray-400 cursor-not-allowed opacity-70'
-                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 hover:scale-105 shadow-xl hover:shadow-2xl active:scale-95'
+                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-xl active:scale-95 motion-safe:md:hover:scale-105 md:hover:from-blue-700 md:hover:via-indigo-700 md:hover:to-purple-700 md:hover:shadow-2xl'
                 }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -303,7 +304,7 @@ const SpeedTest: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-800">
+                      <div className="text-[clamp(1.5rem,4.8vw,1.875rem)] font-bold text-gray-800">
                       {Math.round(testState.progress)}%
                     </div>
                     <div className="text-xs text-gray-500">Complete</div>
@@ -356,7 +357,7 @@ const SpeedTest: React.FC = () => {
                       </svg>
                     </div>
                     <div className="text-sm font-semibold text-green-700 mb-2 uppercase tracking-wide">Ping</div>
-                    <div className="text-3xl sm:text-4xl font-bold text-green-800 mb-1">{results.ping.toFixed(1)}</div>
+                    <div className="mb-1 text-[clamp(1.75rem,6vw,2.25rem)] font-bold text-green-800">{results.ping.toFixed(1)}</div>
                     <div className="text-sm text-green-600 font-medium mb-3">milliseconds</div>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                       results.ping < 20 ? 'bg-green-100 text-green-800' :
@@ -379,7 +380,7 @@ const SpeedTest: React.FC = () => {
                       </svg>
                     </div>
                     <div className="text-sm font-semibold text-blue-700 mb-2 uppercase tracking-wide">Download</div>
-                    <div className="text-3xl sm:text-4xl font-bold text-blue-800 mb-1">{formatSpeed(results.download)}</div>
+                    <div className="mb-1 text-[clamp(1.75rem,6vw,2.25rem)] font-bold text-blue-800">{formatSpeed(results.download)}</div>
                     <div className="text-sm text-blue-600 font-medium mb-3">Mbps</div>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                       results.download > 100 ? 'bg-green-100 text-green-800' :
@@ -402,7 +403,7 @@ const SpeedTest: React.FC = () => {
                       </svg>
                     </div>
                     <div className="text-sm font-semibold text-purple-700 mb-2 uppercase tracking-wide">Upload</div>
-                    <div className="text-3xl sm:text-4xl font-bold text-purple-800 mb-1">{formatSpeed(results.upload)}</div>
+                    <div className="mb-1 text-[clamp(1.75rem,6vw,2.25rem)] font-bold text-purple-800">{formatSpeed(results.upload)}</div>
                     <div className="text-sm text-purple-600 font-medium mb-3">Mbps</div>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                       results.upload > 50 ? 'bg-green-100 text-green-800' :
@@ -419,7 +420,7 @@ const SpeedTest: React.FC = () => {
               <div className="text-center mt-8">
                 <button
                   onClick={runSpeedTest}
-                  className="group inline-flex items-center space-x-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-700 rounded-2xl text-sm sm:text-base font-semibold transition-all duration-300 shadow-md hover:shadow-lg border border-gray-200/50 hover:-translate-y-0.5"
+                  className="group inline-flex items-center space-x-2 rounded-2xl border border-gray-200/50 bg-gradient-to-r from-gray-100 to-gray-50 px-6 py-3 text-sm font-semibold text-gray-700 shadow-md transition-all duration-300 motion-safe:md:hover:-translate-y-0.5 md:hover:from-gray-200 md:hover:to-gray-100 md:hover:shadow-lg sm:px-8 sm:py-4 sm:text-base"
                 >
                   <svg className="w-3 h-3 sm:w-4 sm:h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

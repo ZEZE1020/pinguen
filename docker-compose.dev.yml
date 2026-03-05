@@ -33,7 +33,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=/api
+      - VITE_API_PROXY_TARGET=http://backend-dev:8080
 
 networks:
   pinguen-dev-network:
