@@ -257,7 +257,7 @@ jobs:
         docker build -t test-frontend ./frontend
 
     - name: Run Trivy vulnerability scanner on Backend
-      uses: aquasecurity/trivy-action@0.33.1
+      uses: aquasecurity/trivy-action@0.35.0
       continue-on-error: true
       with:
         image-ref: 'test-backend'
@@ -265,7 +265,7 @@ jobs:
         output: 'backend-trivy-results.sarif'
 
     - name: Run Trivy vulnerability scanner on Frontend
-      uses: aquasecurity/trivy-action@0.33.1
+      uses: aquasecurity/trivy-action@0.35.0
       continue-on-error: true
       with:
         image-ref: 'test-frontend'
